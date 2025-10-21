@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFXP SwitchOn Raffle</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .left-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 600px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-upload label {
+            background: #4299e1;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .file-upload label:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .winner-select {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .winner-select select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .spin-btn {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .spin-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .reset-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .reset-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .next-round-btn {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: none;
+        }
+
+        .next-round-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .next-round-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .info-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .participants-info {
+            text-align: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 5px solid #4299e1;
+        }
+
+        .winners-info {
+            text-align: center;
+            padding: 15px;
+            background: #fff5f5;
+            border-radius: 10px;
+            border-left: 5px solid #e74c3c;
+        }
+
+        .round-info {
+            background: #f0f4ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .round-info h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            line-height: 1.4;
+        }
+
+        .round-info p {
+            color: #2d3748;
+            padding: 5px 0;
+            font-size: 0.95em;
+            margin-left: 15px;
+        }
+
+        .round-info .total-left {
+            color: #4299e1;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-left: 0;
+            padding-top: 15px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .wheel-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .wheel {
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            border: 8px solid #2d3748;
+            position: relative;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(50% 50%, 50% 0%, 100% 0%);
+            transform-origin: center;
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .wheel-center img {
+            width: 130px;
+            height: 130px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .winners-display {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+
+        .winners-display.empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7fafc;
+            color: #a0aec0;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .winners-display h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .winner-card {
+            background: rgba(255, 255, 255, 0.95);
+            color: #2d3748;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .winner-card .winner-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+            min-width: 80px;
+        }
+
+        .winner-card .participant-name {
+            flex: 1;
+            color: #2d3748;
+            font-weight: bold;
+            font-size: 1.05em;
+        }
+
+        .winner-card .prize-name {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95em;
+            white-space: nowrap;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .spinning {
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6) !important;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .info-panels {
+                grid-template-columns: 1fr;
+            }
+
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .wheel {
+                width: 350px;
+                height: 350px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .winners-display {
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 NFXP SwitchOn Raffle</h1>
+            <p>Upload participants and spin to win!</p>
+        </div>
+
+        <div class="controls">
+            <div class="file-upload">
+                <input type="file" id="fileInput" accept=".xlsx,.xls" />
+                <label for="fileInput">📁 Upload Excel File</label>
+            </div>
+
+            <div class="winner-select">
+                <label for="winnerCount">Winners per spin:</label>
+                <select id="winnerCount">
+                    <option value="1">1 Winner</option>
+                    <option value="5">5 Winners</option>
+                    <option value="10">10 Winners</option>
+                </select>
+            </div>
+
+            <button id="spinBtn" class="spin-btn" disabled>🎲 Spin the Wheel!</button>
+            <button id="nextRoundBtn" class="next-round-btn">🏁 Go to Next Round!</button>
+            <button id="resetBtn" class="reset-btn" disabled>🔄 Reset All Winners</button>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="main-layout">
+            <div class="left-section">
+                <div class="info-panels">
+                    <div id="participantsInfo" class="participants-info" style="display: none;">
+                        <p><strong>Total Participants:</strong> <span id="participantCount">0</span></p>
+                    </div>
+
+                    <div id="winnersInfo" class="winners-info" style="display: none;">
+                        <p><strong>Winners so far:</strong> <span id="winnersSoFar">0</span> | <strong>Remaining:</strong> <span id="remainingCount">0</span></p>
+                    </div>
+                </div>
+
+                <div id="roundInfo" class="round-info" style="display: none;"></div>
+
+                <div class="wheel-container">
+                    <div id="wheel" class="wheel">
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 18px; color: #666;">
+                            Upload participants to start
+                        </div>
+                    </div>
+                    <div class="wheel-center">
+                        <img src="logo.png" alt="" onerror="this.style.display='none'">
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <div id="winnersDisplay" class="winners-display empty-state">
+                    <p>🎲 Spin the wheel to see winners here!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let participants = [];
+        let isSpinning = false;
+        let usedParticipants = [];
+        let totalWinnersCount = 0;
+        let currentRoundIndex = 0;
+        let currentRoundStarted = false;
+        
+        const rounds = [
+            {
+                title: "🏁 Round 1: Pocket Power – Look, Think, Act!",
+                subtitle: "📱 Small gadgets, big awareness — start your SwitchOn moment!",
+                prizes: [
+                    { name: 'Smartphone Samsung A05s', count: 5 },
+                    { name: 'Smartphone Oppo A18', count: 2 },
+                    { name: 'Smartphone Redmi 13C', count: 2 },
+                    { name: 'Smartwatch Lenovo S2 PRO', count: 1 }
+                ]
+            },
+            {
+                title: "🔊 Round 2: Mindful Beats",
+                subtitle: "🎧 Tune in, stay present, move smartly with headphones and watches.",
+                prizes: [
+                    { name: 'Galaxy Buds Pro 3', count: 5 },
+                    { name: 'Swiss Military DOM Watch', count: 3 },
+                    { name: 'Smartwatch Lenovo S2 PRO', count: 1 },
+                    { name: 'Galaxy Watch 4', count: 1 }
+                ]
+            },
+            {
+                title: "📟 Round 3: Screens of Awareness",
+                subtitle: "📱⌚ See, assess, act — tablets and watches to keep you alert.",
+                prizes: [
+                    { name: 'Samsung Tab A9+', count: 5 },
+                    { name: 'Samsung Tab A8', count: 1 },
+                    { name: 'Galaxy Watch 7', count: 3 },
+                    { name: 'Galaxy Watch 4', count: 1 }
+                ]
+            },
+            {
+                title: "🚀 Round 4: Focus Takeoff",
+                subtitle: "🚀 Boost your SwitchOn energy — plan, act, enjoy every moment!",
+                prizes: [
+                    { name: 'Samsung Tab S10 FE', count: 10 }
+                ]
+            },
+            {
+                title: "🏆 Round 5: SwitchOn Grand Finale",
+                subtitle: "🎉 Celebrate being mindful — win a gadget and stay ready in every moment!",
+                prizes: [
+                    { name: 'iPad', count: 3 },
+                    { name: 'Galaxy Watch 7', count: 2 }
+                ]
+            }
+        ];
+        
+        let remainingPrizes = [];
+
+        const fileInput = document.getElementById('fileInput');
+        const spinBtn = document.getElementById('spinBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const nextRoundBtn = document.getElementById('nextRoundBtn');
+        const wheel = document.getElementById('wheel');
+        const participantsInfo = document.getElementById('participantsInfo');
+        const participantCount = document.getElementById('participantCount');
+        const winnersInfo = document.getElementById('winnersInfo');
+        const winnersSoFar = document.getElementById('winnersSoFar');
+        const remainingCount = document.getElementById('remainingCount');
+        const winnersDisplay = document.getElementById('winnersDisplay');
+        const winnerCountSelect = document.getElementById('winnerCount');
+        const statusMessage = document.getElementById('statusMessage');
+        const roundInfo = document.getElementById('roundInfo');
+
+        function showStatus(message, type = 'success') {
+            statusMessage.innerHTML = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function initializePrizes() {
+            remainingPrizes = [];
+            currentRoundIndex = 0;
+            currentRoundStarted = false;
+            
+            rounds.forEach(round => {
+                round.prizes.forEach(prize => {
+                    for (let i = 0; i < prize.count; i++) {
+                        remainingPrizes.push(prize.name);
+                    }
+                });
+            });
+        }
+
+        function getCurrentRoundPrizes() {
+            const currentRound = rounds[currentRoundIndex];
+            if (!currentRound) return [];
+            
+            const roundPrizeNames = currentRound.prizes.map(p => p.name);
+            return remainingPrizes.filter(prize => roundPrizeNames.includes(prize));
+        }
+
+        function isCurrentRoundComplete() {
+            return getCurrentRoundPrizes().length === 0;
+        }
+
+        function updateNextRoundButton() {
+            const currentRoundPrizesCount = getCurrentRoundPrizes().length;
+            const winnersCount = parseInt(winnerCountSelect.value);
+            
+            if (currentRoundStarted && currentRoundPrizesCount < winnersCount && currentRoundIndex < rounds.length - 1) {
+                nextRoundBtn.style.display = 'inline-block';
+                spinBtn.disabled = true;
+            } else if (currentRoundStarted && currentRoundPrizesCount === 0 && currentRoundIndex < rounds.length - 1) {
+                nextRoundBtn.style.display = 'inline-block';
+                spinBtn.disabled = true;
+            } else {
+                nextRoundBtn.style.display = 'none';
+                if (!isSpinning && participants.length > 0 && remainingPrizes.length > 0) {
+                    spinBtn.disabled = false;
+                }
+            }
+        }
+
+        function goToNextRound() {
+            if (currentRoundIndex < rounds.length - 1) {
+                currentRoundIndex++;
+                currentRoundStarted = false;
+                nextRoundBtn.style.display = 'none';
+                spinBtn.disabled = false;
+                updateRoundDisplay();
+                showStatus(`✅ Round ${currentRoundIndex + 1} is ready! Click "Spin the Wheel" to start.`, 'success');
+            }
+        }
+
+        function getRandomPrizeFromCurrentRound() {
+            const currentRoundPrizes = getCurrentRoundPrizes();
+            
+            if (currentRoundPrizes.length === 0) {
+                return null;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * currentRoundPrizes.length);
+            const selectedPrize = currentRoundPrizes[randomIndex];
+            
+            const indexInRemaining = remainingPrizes.indexOf(selectedPrize);
+            remainingPrizes.splice(indexInRemaining, 1);
+            
+            return selectedPrize;
+        }
+
+        function updateRoundDisplay() {
+            const currentRound = rounds[currentRoundIndex];
+            if (!currentRound) return;
+            
+            roundInfo.style.display = 'block';
+            
+            let html = `<h3>${currentRound.title}<br><span style="font-size: 0.85em; font-weight: normal;">${currentRound.subtitle}</span></h3>`;
+            
+            currentRound.prizes.forEach(prize => {
+                const remaining = remainingPrizes.filter(p => p === prize.name).length;
+                html += `<p>• ${prize.name} — ${remaining}</p>`;
+            });
+            
+            html += `<p class="total-left">Total prizes left: ${remainingPrizes.length}</p>`;
+            
+            roundInfo.innerHTML = html;
+        }
+
+        function updateWinnersInfo() {
+            if (participants.length > 0) {
+                winnersSoFar.textContent = usedParticipants.length;
+                remainingCount.textContent = participants.length - usedParticipants.length;
+                winnersInfo.style.display = 'block';
+            }
+        }
+
+        fileInput.addEventListener('change', handleFileUpload);
+        spinBtn.addEventListener('click', spinWheel);
+        resetBtn.addEventListener('click', resetWinners);
+        nextRoundBtn.addEventListener('click', goToNextRound);
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onerror = function() {
+                showStatus('Error reading Excel file. Please check the file format.', 'error');
+            };
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    if (jsonData.length === 0) {
+                        showStatus('Excel file is empty.', 'error');
+                        return;
+                    }
+
+                    participants = [];
+                    usedParticipants = [];
+                    totalWinnersCount = 0;
+
+                    for (let i = 0; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row && row.some(cell => cell !== undefined && cell !== '')) {
+                            const participantInfo = row
+                                .filter(cell => cell !== undefined && cell !== '')
+                                .map(cell => cell.toString().trim())
+                                .join(' | ');
+                            
+                            if (participantInfo) {
+                                participants.push({
+                                    displayText: participantInfo,
+                                    rawData: row
+                                });
+                            }
+                        }
+                    }
+
+                    if (participants.length === 0) {
+                        showStatus('No valid participant data found in the Excel file.', 'error');
+                        return;
+                    }
+
+                    updateParticipantsDisplay();
+                    createWheel();
+                    spinBtn.disabled = false;
+                    resetBtn.disabled = true;
+                    nextRoundBtn.style.display = 'none';
+                    winnersDisplay.innerHTML = '<p>🎲 Spin the wheel to see winners here!</p>';
+                    winnersDisplay.classList.add('empty-state');
+                    updateWinnersInfo();
+                    initializePrizes();
+                    currentRoundStarted = false;
+                    updateRoundDisplay();
+                    showStatus(`✅ Successfully loaded ${participants.length} participants!`);
+
+                } catch (error) {
+                    console.error('Error reading file:', error);
+                    showStatus('Error reading Excel file. Please check the file format.', 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function updateParticipantsDisplay() {
+            participantCount.textContent = participants.length;
+            participantsInfo.style.display = 'block';
+        }
+
+        function createWheel() {
+            const colors = [
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
+                '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9',
+                '#ff8a80', '#82b1ff', '#b9f6ca', '#ffff8d', '#ff80ab',
+                '#ea80fc', '#80d8ff', '#a7ffeb', '#ffd180', '#ff9e80'
+            ];
+
+            wheel.innerHTML = '';
+            
+            const numSegments = participants.length;
+            const segmentAngle = 360 / numSegments;
+
+            participants.forEach((participant, index) => {
+                const segment = document.createElement('div');
+                segment.className = 'wheel-segment';
+                
+                const rotation = index * segmentAngle;
+                const nextRotation = (index + 1) * segmentAngle;
+                
+                const startAngle = rotation - 90;
+                const endAngle = nextRotation - 90;
+                
+                const x1 = 50 + 50 * Math.cos(startAngle * Math.PI / 180);
+                const y1 = 50 + 50 * Math.sin(startAngle * Math.PI / 180);
+                const x2 = 50 + 50 * Math.cos(endAngle * Math.PI / 180);
+                const y2 = 50 + 50 * Math.sin(endAngle * Math.PI / 180);
+                
+                segment.style.clipPath = `polygon(50% 50%, ${x1}% ${y1}%, ${x2}% ${y2}%)`;
+                segment.style.backgroundColor = colors[index % colors.length];
+                
+                wheel.appendChild(segment);
+            });
+        }
+
+        function spinWheel() {
+            if (isSpinning || participants.length === 0) return;
+            
+            currentRoundStarted = true;
+            
+            const winnersCount = parseInt(winnerCountSelect.value);
+            const availableParticipants = participants.filter(p => !usedParticipants.includes(p));
+            
+            const currentRoundPrizesCount = getCurrentRoundPrizes().length;
+            
+            if (currentRoundPrizesCount === 0) {
+                showStatus('⚠️ Current round is complete! Click "Go to Next Round" to continue.', 'error');
+                updateNextRoundButton();
+                return;
+            }
+            
+            if (remainingPrizes.length === 0) {
+                showStatus('❌ No prizes remaining! Please click "Reset All Winners" to start a new round.', 'error');
+                return;
+            }
+            
+            if (availableParticipants.length === 0) {
+                showStatus('❌ All participants have already won! Please click "Reset All Winners" to start new rounds.', 'error');
+                return;
+            }
+
+            if (availableParticipants.length < winnersCount) {
+                showStatus(`⚠️ Only ${availableParticipants.length} participants remaining. Please adjust winner count or reset.`, 'error');
+                return;
+            }
+            
+            if (currentRoundPrizesCount < winnersCount) {
+                showStatus(`⚠️ Only ${currentRoundPrizesCount} prizes remaining in current round. Adjust winner count or finish round.`, 'error');
+                return;
+            }
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+            wheel.classList.add('spinning');
+
+            const baseSpins = 5 + Math.floor(Math.random() * 3);
+            const extraDegrees = Math.random() * 360;
+            const totalRotation = (baseSpins * 360) + extraDegrees;
+            
+            const currentTransform = wheel.style.transform;
+            const currentRotation = currentTransform ? parseFloat(currentTransform.replace('rotate(', '').replace('deg)', '')) : 0;
+            const finalRotation = currentRotation + totalRotation;
+            
+            wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            wheel.style.transform = `rotate(${finalRotation}deg)`;
+
+            setTimeout(() => {
+                const winners = [];
+                const shuffledAvailable = [...availableParticipants].sort(() => Math.random() - 0.5);
+                
+                for (let i = 0; i < winnersCount && i < shuffledAvailable.length; i++) {
+                    const prize = getRandomPrizeFromCurrentRound();
+                    if (prize === null) {
+                        showStatus('⚠️ Ran out of prizes mid-draw!', 'error');
+                        break;
+                    }
+                    winners.push({
+                        participant: shuffledAvailable[i],
+                        prize: prize
+                    });
+                    usedParticipants.push(shuffledAvailable[i]);
+                }
+
+                totalWinnersCount += winners.length;
+                displayWinners(winners);
+                updateRoundDisplay();
+                
+                isSpinning = false;
+                spinBtn.disabled = false;
+                wheel.classList.remove('spinning');
+                resetBtn.disabled = false;
+                updateWinnersInfo();
+                updateNextRoundButton();
+                
+                showStatus(`🎉 Congratulations to ${winners.length} winner${winners.length > 1 ? 's' : ''}!`);
+            }, 4000);
+        }
+
+        function displayWinners(winners) {
+            winnersDisplay.classList.remove('empty-state');
+            
+            winnersDisplay.innerHTML = '<h2>🎉 Winners! 🎉</h2><div id="winnersContainer"></div>';
+            const container = winnersDisplay.querySelector('#winnersContainer');
+            
+            winners.forEach((winnerObj, index) => {
+                const winnerCard = document.createElement('div');
+                winnerCard.className = 'winner-card';
+                winnerCard.style.animationDelay = `${index * 0.1}s`;
+                
+                const winnerNumber = totalWinnersCount - winners.length + index + 1;
+                
+                winnerCard.innerHTML = `
+                    <span class="winner-number">🏆 Winner ${winnerNumber}:</span>
+                    <span class="participant-name">${winnerObj.participant.displayText}</span>
+                    <span class="prize-name">🎁 ${winnerObj.prize}</span>
+                `;
+                
+                container.appendChild(winnerCard);
+            });
+        }
+
+        function resetWinners() {
+            if (confirm('Are you sure you want to reset all winners?\n\nThis will:\n✓ Clear all previous winners\n✓ Allow everyone to participate again\n✓ Restore all prizes')) {
+                usedParticipants = [];
+                totalWinnersCount = 0;
+                currentRoundStarted = false;
+                winnersDisplay.innerHTML = '<p>🎲 Spin the wheel to see winners here!</p>';
+                winnersDisplay.classList.add('empty-state');
+                resetBtn.disabled = true;
+                nextRoundBtn.style.display = 'none';
+                spinBtn.disabled = false;
+                initializePrizes();
+                updateRoundDisplay();
+                updateWinnersInfo();
+                showStatus('✅ All winners reset! Everyone can participate again.', 'success');
+            }
+        }
+    </script>
+</body>
+</html>
