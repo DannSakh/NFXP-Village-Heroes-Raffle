@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFXP SwitchOn Raffle</title>
+    <title>Village Heroes Raffle</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
@@ -98,20 +98,6 @@
         .file-upload label:hover {
             background: #3182ce;
             transform: translateY(-2px);
-        }
-
-        .winner-select {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .winner-select select {
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            background: white;
         }
 
         .spin-btn {
@@ -429,7 +415,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 NFXP SwitchOn Raffle</h1>
+            <h1>🏆 Village Heroes Raffle</h1>
             <p>Upload participants and spin to win!</p>
         </div>
 
@@ -437,15 +423,6 @@
             <div class="file-upload">
                 <input type="file" id="fileInput" accept=".xlsx,.xls" />
                 <label for="fileInput">📁 Upload Excel File</label>
-            </div>
-
-            <div class="winner-select">
-                <label for="winnerCount">Winners per spin:</label>
-                <select id="winnerCount">
-                    <option value="1">1 Winner</option>
-                    <option value="5">5 Winners</option>
-                    <option value="10">10 Winners</option>
-                </select>
             </div>
 
             <button id="spinBtn" class="spin-btn" disabled>🎲 Spin the Wheel!</button>
@@ -496,51 +473,36 @@
         let totalWinnersCount = 0;
         let currentRoundIndex = 0;
         let currentRoundStarted = false;
+        const WINNERS_PER_ROUND = 15;
         
         const rounds = [
             {
-                title: "🏁 Round 1: Pocket Power – Look, Think, Act!",
-                subtitle: "📱 Small gadgets, big awareness — start your SwitchOn moment!",
+                title: "Round 1",
                 prizes: [
-                    { name: 'Smartphone Samsung A05s', count: 5 },
-                    { name: 'Smartphone Oppo A18', count: 2 },
-                    { name: 'Smartphone Redmi 13C', count: 2 },
-                    { name: 'Smartwatch Lenovo S2 PRO', count: 1 }
+                    { name: 'Power Bank', count: 10 },
+                    { name: 'Smart Watch', count: 5 }
                 ]
             },
             {
-                title: "🔊 Round 2: Mindful Beats",
-                subtitle: "🎧 Tune in, stay present, move smartly with headphones and watches.",
+                title: "Round 2",
                 prizes: [
-                    { name: 'Galaxy Buds Pro 3', count: 5 },
-                    { name: 'Swiss Military DOM Watch', count: 3 },
-                    { name: 'Smartwatch Lenovo S2 PRO', count: 1 },
-                    { name: 'Galaxy Watch 4', count: 1 }
+                    { name: 'Power Bank', count: 10 },
+                    { name: 'Smart Watch', count: 5 }
                 ]
             },
             {
-                title: "📟 Round 3: Screens of Awareness",
-                subtitle: "📱⌚ See, assess, act — tablets and watches to keep you alert.",
+                title: "Round 3",
                 prizes: [
-                    { name: 'Samsung Tab A9+', count: 5 },
-                    { name: 'Samsung Tab A8', count: 1 },
-                    { name: 'Galaxy Watch 7', count: 3 },
-                    { name: 'Galaxy Watch 4', count: 1 }
+                    { name: 'Power Bank', count: 5 },
+                    { name: 'Smart Watch', count: 10 }
                 ]
             },
             {
-                title: "🚀 Round 4: Focus Takeoff",
-                subtitle: "🚀 Boost your SwitchOn energy — plan, act, enjoy every moment!",
+                title: "Round 4",
                 prizes: [
-                    { name: 'Samsung Tab S10 FE', count: 10 }
-                ]
-            },
-            {
-                title: "🏆 Round 5: SwitchOn Grand Finale",
-                subtitle: "🎉 Celebrate being mindful — win a gadget and stay ready in every moment!",
-                prizes: [
-                    { name: 'iPad', count: 3 },
-                    { name: 'Galaxy Watch 7', count: 2 }
+                    { name: 'Suitcase', count: 5 },
+                    { name: 'Tablet', count: 7 },
+                    { name: 'Smart TV', count: 3 }
                 ]
             }
         ];
@@ -558,7 +520,6 @@
         const winnersSoFar = document.getElementById('winnersSoFar');
         const remainingCount = document.getElementById('remainingCount');
         const winnersDisplay = document.getElementById('winnersDisplay');
-        const winnerCountSelect = document.getElementById('winnerCount');
         const statusMessage = document.getElementById('statusMessage');
         const roundInfo = document.getElementById('roundInfo');
 
@@ -600,9 +561,8 @@
 
         function updateNextRoundButton() {
             const currentRoundPrizesCount = getCurrentRoundPrizes().length;
-            const winnersCount = parseInt(winnerCountSelect.value);
             
-            if (currentRoundStarted && currentRoundPrizesCount < winnersCount && currentRoundIndex < rounds.length - 1) {
+            if (currentRoundStarted && currentRoundPrizesCount < WINNERS_PER_ROUND && currentRoundIndex < rounds.length - 1) {
                 nextRoundBtn.style.display = 'inline-block';
                 spinBtn.disabled = true;
             } else if (currentRoundStarted && currentRoundPrizesCount === 0 && currentRoundIndex < rounds.length - 1) {
@@ -623,7 +583,7 @@
                 nextRoundBtn.style.display = 'none';
                 spinBtn.disabled = false;
                 updateRoundDisplay();
-                showStatus(`✅ Round ${currentRoundIndex + 1} is ready! Click "Spin the Wheel" to start.`, 'success');
+                showStatus(`✅ ${rounds[currentRoundIndex].title} is ready! Click "Spin the Wheel" to start.`, 'success');
             }
         }
 
@@ -649,7 +609,7 @@
             
             roundInfo.style.display = 'block';
             
-            let html = `<h3>${currentRound.title}<br><span style="font-size: 0.85em; font-weight: normal;">${currentRound.subtitle}</span></h3>`;
+            let html = `<h3>${currentRound.title}</h3>`;
             
             currentRound.prizes.forEach(prize => {
                 const remaining = remainingPrizes.filter(p => p === prize.name).length;
@@ -786,7 +746,7 @@
             
             currentRoundStarted = true;
             
-            const winnersCount = parseInt(winnerCountSelect.value);
+            const winnersCount = WINNERS_PER_ROUND;
             const availableParticipants = participants.filter(p => !usedParticipants.includes(p));
             
             const currentRoundPrizesCount = getCurrentRoundPrizes().length;
@@ -813,7 +773,8 @@
             }
             
             if (currentRoundPrizesCount < winnersCount) {
-                showStatus(`⚠️ Only ${currentRoundPrizesCount} prizes remaining in current round. Adjust winner count or finish round.`, 'error');
+                showStatus(`⚠️ Only ${currentRoundPrizesCount} prizes remaining in current round. Click "Go to Next Round" or adjust winner count.`, 'error');
+                updateNextRoundButton();
                 return;
             }
 
@@ -854,7 +815,6 @@
                 updateRoundDisplay();
                 
                 isSpinning = false;
-                spinBtn.disabled = false;
                 wheel.classList.remove('spinning');
                 resetBtn.disabled = false;
                 updateWinnersInfo();
