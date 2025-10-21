@@ -472,7 +472,6 @@
         let usedParticipants = [];
         let totalWinnersCount = 0;
         let currentRoundIndex = 0;
-        let currentRoundStarted = false;
         const WINNERS_PER_ROUND = 15;
         
         const rounds = [
@@ -536,7 +535,6 @@
         function initializePrizes() {
             remainingPrizes = [];
             currentRoundIndex = 0;
-            currentRoundStarted = false;
             
             rounds.forEach(round => {
                 round.prizes.forEach(prize => {
@@ -562,15 +560,13 @@
         function updateNextRoundButton() {
             const currentRoundPrizesCount = getCurrentRoundPrizes().length;
             
-            if (currentRoundStarted && currentRoundPrizesCount < WINNERS_PER_ROUND && currentRoundIndex < rounds.length - 1) {
-                nextRoundBtn.style.display = 'inline-block';
-                spinBtn.disabled = true;
-            } else if (currentRoundStarted && currentRoundPrizesCount === 0 && currentRoundIndex < rounds.length - 1) {
+            // Показываем кнопку если призы в текущем раунде закончились и есть еще раунды
+            if (currentRoundPrizesCount === 0 && currentRoundIndex < rounds.length - 1) {
                 nextRoundBtn.style.display = 'inline-block';
                 spinBtn.disabled = true;
             } else {
                 nextRoundBtn.style.display = 'none';
-                if (!isSpinning && participants.length > 0 && remainingPrizes.length > 0) {
+                if (!isSpinning && participants.length > 0 && getCurrentRoundPrizes().length > 0) {
                     spinBtn.disabled = false;
                 }
             }
@@ -579,7 +575,6 @@
         function goToNextRound() {
             if (currentRoundIndex < rounds.length - 1) {
                 currentRoundIndex++;
-                currentRoundStarted = false;
                 nextRoundBtn.style.display = 'none';
                 spinBtn.disabled = false;
                 updateRoundDisplay();
@@ -689,7 +684,6 @@
                     winnersDisplay.classList.add('empty-state');
                     updateWinnersInfo();
                     initializePrizes();
-                    currentRoundStarted = false;
                     updateRoundDisplay();
                     showStatus(`✅ Successfully loaded ${participants.length} participants!`);
 
@@ -744,8 +738,6 @@
         function spinWheel() {
             if (isSpinning || participants.length === 0) return;
             
-            currentRoundStarted = true;
-            
             const winnersCount = WINNERS_PER_ROUND;
             const availableParticipants = participants.filter(p => !usedParticipants.includes(p));
             
@@ -758,7 +750,7 @@
             }
             
             if (remainingPrizes.length === 0) {
-                showStatus('❌ No prizes remaining! Please click "Reset All Winners" to start a new round.', 'error');
+                showStatus('❌ All prizes have been awarded! Congratulations to all winners!', 'success');
                 return;
             }
             
@@ -768,12 +760,12 @@
             }
 
             if (availableParticipants.length < winnersCount) {
-                showStatus(`⚠️ Only ${availableParticipants.length} participants remaining. Please adjust winner count or reset.`, 'error');
+                showStatus(`⚠️ Only ${availableParticipants.length} participants remaining. Not enough for a full round.`, 'error');
                 return;
             }
             
             if (currentRoundPrizesCount < winnersCount) {
-                showStatus(`⚠️ Only ${currentRoundPrizesCount} prizes remaining in current round. Click "Go to Next Round" or adjust winner count.`, 'error');
+                showStatus(`⚠️ Only ${currentRoundPrizesCount} prizes remaining in current round. Click "Go to Next Round".`, 'error');
                 updateNextRoundButton();
                 return;
             }
@@ -820,7 +812,12 @@
                 updateWinnersInfo();
                 updateNextRoundButton();
                 
-                showStatus(`🎉 Congratulations to ${winners.length} winner${winners.length > 1 ? 's' : ''}!`);
+                const currentRoundPrizesLeft = getCurrentRoundPrizes().length;
+                if (currentRoundPrizesLeft === 0 && currentRoundIndex < rounds.length - 1) {
+                    showStatus(`🎉 ${rounds[currentRoundIndex].title} complete! Click "Go to Next Round" to continue.`, 'success');
+                } else {
+                    showStatus(`🎉 Congratulations to ${winners.length} winner${winners.length > 1 ? 's' : ''}!`);
+                }
             }, 4000);
         }
 
@@ -851,7 +848,6 @@
             if (confirm('Are you sure you want to reset all winners?\n\nThis will:\n✓ Clear all previous winners\n✓ Allow everyone to participate again\n✓ Restore all prizes')) {
                 usedParticipants = [];
                 totalWinnersCount = 0;
-                currentRoundStarted = false;
                 winnersDisplay.innerHTML = '<p>🎲 Spin the wheel to see winners here!</p>';
                 winnersDisplay.classList.add('empty-state');
                 resetBtn.disabled = true;
